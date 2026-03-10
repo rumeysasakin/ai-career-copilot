@@ -1,0 +1,34 @@
+AD SOYAD: Rumeysa Sakın
+
+HAKKIMDA:
+2 yıllık yazılım geliştirme deneyimine sahip, Python ve web teknolojilerine odaklanan bir yazılımcıyım.
+Takım çalışmasına yatkın, sürekli öğrenmeye açık biriyim.
+
+EĞİTİM:
+- Bilgisayar Mühendisliği Lisans - İstanbul Teknik Üniversitesi (2020-2024)
+
+TEKNİK BECERİLER:
+- Programlama: Python, JavaScript, HTML/CSS
+- Framework: Django, Flask, React (temel seviye)
+- Veritabanı: PostgreSQL, SQLite
+- Araçlar: Git, GitHub, VS Code, Docker (temel seviye)
+- Diğer: REST API geliştirme, Linux temel kullanım
+
+DENEYİM:
+- Stajyer Yazılım Geliştirici - ABC Teknoloji (6 ay)
+  * Django ile web uygulaması geliştirme
+  * REST API tasarımı ve implementasyonu
+  * PostgreSQL veritabanı yönetimi
+
+- Freelance Projeler (1 yıl)
+  * Flask ile küçük ölçekli web servisleri
+  * React ile basit frontend uygulamaları
+
+PROJELER:
+- Kişisel blog sitesi (Django + PostgreSQL)
+- Hava durumu uygulaması (Flask + API entegrasyonu)
+- Todo uygulaması (React)
+
+DİLLER:
+- Türkçe (Ana dil)
+- İngilizce (B2 - Upper Intermediate)

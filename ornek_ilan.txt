@@ -1,0 +1,33 @@
+POZİSYON: Junior Backend Developer
+FİRMA: XYZ Yazılım A.Ş.
+LOKASYON: İstanbul (Hibrit çalışma)
+
+İŞ TANIMI:
+Büyüyen ekibimize katılacak, backend geliştirme süreçlerinde aktif rol alacak
+bir Junior Backend Developer arıyoruz.
+
+ARANAN NİTELİKLER:
+- Python programlama dilinde en az 1 yıl deneyim
+- Django veya FastAPI framework bilgisi
+- RESTful API tasarımı ve geliştirme deneyimi
+- PostgreSQL veya MySQL veritabanı deneyimi
+- Git versiyon kontrol sistemi kullanımı
+- Docker ve konteyner teknolojileri bilgisi
+- CI/CD süreçlerine aşinalık (GitHub Actions, Jenkins vb.)
+- Redis veya RabbitMQ gibi mesaj kuyruğu sistemleri bilgisi
+- Temel Kubernetes bilgisi (tercih sebebi)
+- Celery ile asenkron görev yönetimi (tercih sebebi)
+- Mikroservis mimarisi anlayışı
+- Birim test yazma deneyimi (pytest)
+- İngilizce teknik dokümantasyon okuyabilme
+
+ÖN KOŞULLAR:
+- Bilgisayar Mühendisliği veya ilgili bölümlerden mezun olmak
+- Takım çalışmasına yatkın olmak
+- Sürekli öğrenmeye ve gelişmeye açık olmak
+
+SUNDUKLARIMIZ:
+- Rekabetçi maaş
+- Hibrit çalışma modeli
+- Eğitim ve gelişim bütçesi
+- Sağlık sigortası
