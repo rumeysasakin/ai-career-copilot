@@ -5,16 +5,14 @@ from langchain_ollama import ChatOllama
 # ============================================================
 # 1) LLM TANIMI
 # ============================================================
-# Ollama üzerinden yerel çalışan LLM modelimizi tanımlıyoruz.
-# temperature=0.3 → daha tutarlı ve odaklı cevaplar için düşük tuttuk.
 llm = ChatOllama(model="llama3", temperature=0.3)
 
 
 # ============================================================
-# 2) PROMPT ŞABLONLARI
+# 2) AŞAMA 1 — CHAIN (Basit LLM Workflow)
 # ============================================================
+# PromptTemplate → LLM → Yanıt (sabit akış, agent yok)
 
-# --- Adım 1: CV ve iş ilanından beceri çıkarma + karşılaştırma ---
 analiz_prompt = PromptTemplate(
     input_variables=["cv_metni", "ilan_metni"],
     template="""Sen bir kariyer danışmanısın. Sana bir CV metni ve bir iş ilanı metni vereceğim.
@@ -56,10 +54,6 @@ CV METNİ:
 """
 )
 
-# --- Chain oluşturma (LCEL - LangChain Expression Language) ---
-# PromptTemplate → LLM → Yanıt
-# Bu "pipe" (|) operatörü LangChain'in LCEL özelliğidir.
-# Veriyi soldan sağa adım adım geçirir: önce prompt oluşturulur, sonra LLM'e gönderilir.
 analiz_chain = analiz_prompt | llm
 
 
@@ -73,13 +67,35 @@ def dosyadan_oku(dosya_yolu: str) -> str:
         return f.read().strip()
 
 
-def cv_analiz_et(cv_metni: str, ilan_metni: str) -> str:
-    """CV ve iş ilanını karşılaştırıp analiz sonucunu döndürür."""
+def chain_analiz_et(cv_metni: str, ilan_metni: str) -> str:
+    """Aşama 1: Basit chain ile analiz."""
     sonuc = analiz_chain.invoke({
         "cv_metni": cv_metni,
         "ilan_metni": ilan_metni
     })
     return sonuc.content
+
+
+def metin_al(dosya_adi: str, tur: str) -> str:
+    """Kullanıcıdan dosya veya elle metin girişi alır."""
+    print(f"{tur} metnini nasıl girmek istersiniz?")
+    print(f"  1 - Dosyadan oku ({dosya_adi})")
+    print(f"  2 - Elle yapıştır")
+    secim = input("Seçiminiz (1/2): ").strip()
+
+    if secim == "1":
+        metin = dosyadan_oku(dosya_adi)
+        print(f"✓ {tur} dosyadan okundu.\n")
+        return metin
+    else:
+        print(f"{tur} metnini yapıştırın (bitirmek için boş satırda 'SON' yazın):")
+        satirlar = []
+        while True:
+            satir = input()
+            if satir.strip().upper() == "SON":
+                break
+            satirlar.append(satir)
+        return "\n".join(satirlar)
 
 
 # ============================================================
@@ -88,57 +104,67 @@ def cv_analiz_et(cv_metni: str, ilan_metni: str) -> str:
 
 def main():
     print("=" * 60)
-    print("  🔍 CV - İş İlanı Eşleştirme Sistemi")
+    print("  🔍 AI Kariyer Asistanı — CV & İş İlanı Eşleştirme")
     print("  LangChain + Ollama ile Beceri Analizi")
     print("=" * 60)
     print()
 
-    # Kullanıcıya seçenek sun: dosyadan mı okusun, elle mi girsin?
-    print("CV metnini nasıl girmek istersiniz?")
-    print("  1 - Dosyadan oku (ornek_cv.txt)")
-    print("  2 - Elle yapıştır")
-    secim_cv = input("Seçiminiz (1/2): ").strip()
+    # --- Mod seçimi ---
+    print("Hangi modu kullanmak istersiniz?")
+    print("  1 - Basit Analiz (Chain — Aşama 1)")
+    print("  2 - Akıllı Analiz (Agent — Aşama 2)")
+    print()
+    print("  Chain: Sabit akışta tek seferde analiz yapar.")
+    print("  Agent: Tool'ları kullanarak adım adım düşünür, daha detaylı analiz yapar.")
+    print()
+    mod = input("Seçiminiz (1/2): ").strip()
+    print()
 
-    if secim_cv == "1":
-        cv_metni = dosyadan_oku("ornek_cv.txt")
-        print("✓ CV dosyadan okundu.\n")
-    else:
-        print("CV metnini yapıştırın (bitirmek için boş satırda 'SON' yazın):")
-        satirlar = []
-        while True:
-            satir = input()
-            if satir.strip().upper() == "SON":
-                break
-            satirlar.append(satir)
-        cv_metni = "\n".join(satirlar)
-
+    # --- Metin girişi ---
+    cv_metni = metin_al("ornek_cv.txt", "CV")
     print("-" * 60)
-
-    print("İş ilanı metnini nasıl girmek istersiniz?")
-    print("  1 - Dosyadan oku (ornek_ilan.txt)")
-    print("  2 - Elle yapıştır")
-    secim_ilan = input("Seçiminiz (1/2): ").strip()
-
-    if secim_ilan == "1":
-        ilan_metni = dosyadan_oku("ornek_ilan.txt")
-        print("✓ İş ilanı dosyadan okundu.\n")
-    else:
-        print("İş ilanı metnini yapıştırın (bitirmek için boş satırda 'SON' yazın):")
-        satirlar = []
-        while True:
-            satir = input()
-            if satir.strip().upper() == "SON":
-                break
-            satirlar.append(satir)
-        ilan_metni = "\n".join(satirlar)
+    ilan_metni = metin_al("ornek_ilan.txt", "İş ilanı")
 
     print("\n" + "=" * 60)
     print("⏳ Analiz ediliyor... (Bu birkaç saniye sürebilir)")
     print("=" * 60 + "\n")
 
-    # Chain'i çalıştır
-    sonuc = cv_analiz_et(cv_metni, ilan_metni)
+    # --- Analizi çalıştır ---
+    if mod == "2":
+        # Aşama 2: Agent modu
+        from agent import agent_analiz_et
+        print("🤖 Agent modu aktif — Tool çağrılarını aşağıda göreceksiniz:\n")
+        sonuc = agent_analiz_et(cv_metni, ilan_metni)
+    else:
+        # Aşama 1: Chain modu
+        sonuc = chain_analiz_et(cv_metni, ilan_metni)
+
+    print("\n" + "=" * 60)
+    print("📊 ANALİZ SONUCU")
+    print("=" * 60 + "\n")
     print(sonuc)
+
+    # --- Takip sorusu (sadece agent modunda) ---
+    if mod == "2":
+        print("\n" + "-" * 60)
+        print("💬 Agent modunda takip sorusu sorabilirsiniz.")
+        print("   Çıkmak için 'q' yazın.\n")
+        while True:
+            soru = input("Sorunuz: ").strip()
+            if soru.lower() in ("q", "quit", "çık", "cik", ""):
+                print("Görüşmek üzere! 👋")
+                break
+            # Takip sorusunu agent'a gönder (CV ve ilan bağlamıyla birlikte)
+            from agent import agent_executor
+            takip_mesaj = (
+                f"Daha önce analiz ettiğim CV ve ilan hakkında ek soru:\n"
+                f"CV: {cv_metni[:300]}...\nİlan: {ilan_metni[:300]}...\n\n"
+                f"Soru: {soru}"
+            )
+            takip_sonuc = agent_executor.invoke({
+                "messages": [{"role": "user", "content": takip_mesaj}]
+            })
+            print("\n" + takip_sonuc["messages"][-1].content + "\n")
 
 
 if __name__ == "__main__":

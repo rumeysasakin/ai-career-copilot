@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![LangChain](https://img.shields.io/badge/LangChain-LCEL-green.svg)](https://langchain.com)
 [![Ollama](https://img.shields.io/badge/LLM-Ollama%20(Llama3)-orange.svg)](https://ollama.com)
-[![Aşama](https://img.shields.io/badge/Aşama-1%20MVP-yellow.svg)](#proje-yol-haritası)
+[![Aşama](https://img.shields.io/badge/Aşama-2%20Agent-green.svg)](#proje-yol-haritası)
 
 ---
 
@@ -84,7 +84,9 @@ Seçiminiz (1/2): 1
 
 ```
 ai-career-copilot/
-├── main.py                 # Ana uygulama — LLM chain ve kullanıcı arayüzü
+├── main.py                 # Ana uygulama — mod seçimi, girdi alma, çıktı gösterimi
+├── agent.py                # Aşama 2 — Agent yapısı (create_agent + LangGraph)
+├── tools.py                # Agent tool'ları (beceri_cikar, karsilastir, skor, öneri)
 ├── ornek_cv.txt            # Test için örnek CV metni
 ├── ornek_ilan.txt          # Test için örnek iş ilanı metni
 ├── pyproject.toml          # Proje yapılandırması ve bağımlılıklar
@@ -102,6 +104,7 @@ ai-career-copilot/
 
 ## ⚙️ Nasıl Çalışır?
 
+### Mod 1 — Chain (Basit Akış)
 ```
 ┌─────────────┐     ┌──────────────────┐     ┌───────────┐     ┌──────────────┐
 │  Kullanıcı  │────▶│  PromptTemplate  │────▶│  Ollama   │────▶│   Analiz     │
@@ -109,10 +112,20 @@ ai-career-copilot/
 └─────────────┘     └──────────────────┘     └───────────┘     └──────────────┘
 ```
 
+### Mod 2 — Agent (Akıllı Analiz)
+```
+┌─────────────┐     ┌──────────────────┐     ┌───────────────────────────────┐
+│  Kullanıcı  │────▶│  Agent           │────▶│  Tool'lar                     │
+│  CV + İlan  │     │  (ReAct Döngüsü) │     │  beceri_cikar → karsilastir   │
+│             │◀────│  Düşün→Çağır→Gör │◀────│  skor_hesapla → oneri_uret    │
+└─────────────┘     └──────────────────┘     └───────────────────────────────┘
+```
+
 1. **Girdi**: Kullanıcı CV metnini ve iş ilanı metnini girer
-2. **Prompt**: `PromptTemplate` iki metni yapılandırılmış bir talimata dönüştürür
-3. **LLM**: Ollama üzerinden Llama3 modeli metinleri analiz eder
-4. **Çıktı**: Eşleşen/eksik beceriler, öneriler ve uyum skoru döner
+2. **Mod seçimi**: Chain (sabit akış) veya Agent (tool calling)
+3. **Analiz**: Chain → tek seferde / Agent → adım adım tool çağrıları
+4. **Çıktı**: Eşleşen/eksik beceriler, öneriler ve uyum skoru
+5. **Takip** (Agent): Kullanıcı ek soru sorabilir
 
 ### Örnek Çıktı
 
@@ -146,7 +159,7 @@ ai-career-copilot/
 | Aşama | Durum | Açıklama |
 |-------|-------|----------|
 | **1 — Temel MVP** | ✅ Tamamlandı | CV-ilan karşılaştırma, beceri eşleştirme, öneriler |
-| **2 — Agent Yapısı** | 🔜 Sırada | Tool kullanan agent, takip soruları, akıllı kariyer önerileri |
+| **2 — Agent Yapısı** | ✅ Tamamlandı | Tool kullanan agent, takip soruları, akıllı kariyer önerileri |
 | **3 — Ürünleştirme** | 📋 Planlandı | Streamlit arayüz, PDF yükleme, demo yapılabilir hale getirme |
 
 ### Aşama 1 — Temel MVP ✅
@@ -157,12 +170,13 @@ ai-career-copilot/
 - [x] Beceri eşleştirme ve eksik analizi
 - [x] Uyum skoru hesaplama
 
-### Aşama 2 — Agent ve Akıllı Analiz 🔜
-- [ ] LangChain Agent yapısı (tool calling)
-- [ ] Beceri çıkarımı için ayrı tool
-- [ ] Takip soruları sorabilme (interaktif diyalog)
-- [ ] "Hangi projeni öne çıkar" gibi akıllı kariyer önerileri
-- [ ] Structured output (JSON formatında çıktı)
+### Aşama 2 — Agent ve Akıllı Analiz ✅
+- [x] LangChain Agent yapısı (create_agent + LangGraph)
+- [x] 4 ayrı tool: beceri_cikar, karsilastir, skor_hesapla, oneri_uret
+- [x] Tool calling ile adım adım analiz (ReAct döngüsü)
+- [x] Takip soruları sorabilme (interaktif diyalog)
+- [x] Kısmi beceri eşleştirme (kelime bazlı fuzzy matching)
+- [ ] Structured output (JSON formatında çıktı) — gelecek iterasyonda
 
 ### Aşama 3 — Ürünleştirme 📋
 - [ ] Streamlit web arayüzü
@@ -192,8 +206,9 @@ Bu projenin farklı perspektiflerden incelenmesi için üç ayrı doküman hazı
 | **Python 3.11** | Ana programlama dili |
 | **LangChain** | LLM orchestration framework |
 | **LangChain LCEL** | Chain yapısı (PromptTemplate \| LLM) |
+| **LangGraph** | Agent yapısı (create_agent, ReAct döngüsü) |
 | **Ollama** | Yerel LLM çalıştırma altyapısı |
-| **Llama 3** | Dil modeli |
+| **Llama 3 / 3.1** | Dil modelleri (3: chain, 3.1: agent tool calling) |
 | **uv** | Paket ve proje yönetimi |
 
 ---
