@@ -1,55 +1,88 @@
-# 🔍 AI Kariyer Asistanı — CV & İş İlanı Eşleştirme Sistemi
+# 🔍 AI Kariyer Asistanı
 
-> Yapay zeka destekli kariyer analiz aracı. CV'nizi bir iş ilanıyla karşılaştırır; eşleşen becerileri, eksikleri ve somut önerileri sunar.
+> CV'nizi bir iş ilanıyla karşılaştırın — eşleşen becerileri, eksikleri ve somut kariyer önerilerini görün.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
-[![LangChain](https://img.shields.io/badge/LangChain-LCEL-green.svg)](https://langchain.com)
-[![Ollama](https://img.shields.io/badge/LLM-Ollama%20(Llama3)-orange.svg)](https://ollama.com)
-[![Aşama](https://img.shields.io/badge/Aşama-2%20Agent-green.svg)](#proje-yol-haritası)
+[![LangChain](https://img.shields.io/badge/LangChain-LCEL%20%2B%20Tools-green.svg)](https://langchain.com)
+[![Ollama](https://img.shields.io/badge/LLM-Ollama-orange.svg)](https://ollama.com)
+[![Streamlit](https://img.shields.io/badge/UI-Streamlit-red.svg)](https://streamlit.io)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](#docker-ile-çalıştırma)
 
 ---
 
-## � Mevcut Durum
+## Proje Özeti
 
-| Alan | Durum | Detay |
-|------|-------|-------|
-| **Beceri Çıkarma** | ✅ Çalışıyor | 40+ teknik beceri tanıma (KNOWN_SKILLS DB) |
-| **Fuzzy Matching** | ✅ Çalışıyor | Substring + kelime kesişimi ile kısmi eşleştirme |
-| **Öneri Motoru** | ✅ Rule-based | 40+ beceriye özel somut öneriler (ONERI_HARITASI) |
-| **Agent Modu** | ✅ Hibrit | Programatik tool çağrıları + LLM değerlendirme |
-| **Takip Soruları** | ✅ Çalışıyor | Konuşma geçmişi korunarak sohbet |
-| **Web Arayüzü** | 📋 Aşama 3 | Streamlit ile planlanıyor |
-| **PDF Desteği** | 📋 Aşama 3 | PDF'den CV okuma planlanıyor |
+AI Kariyer Asistanı, CV metni ile iş ilanı metnini karşılaştırarak beceri uyumunu analiz eden bir yapay zeka prototipidir. Tamamen yerel çalışır — API anahtarı veya ücretli servis gerektirmez.
 
-> **Not:** Proje şu an terminal tabanlı bir prototiptir. Beceri tanıma rule-based (keyword matching) çalışmaktadır, NLP/ML tabanlı extraction Aşama 3'te planlanmaktadır.
+**Ne yapar:**
+- CV ve iş ilanından teknik becerileri çıkarır (40+ beceri, alias normalization)
+- Beceri eşleştirmesi yapar (fuzzy matching ile)
+- Uyum skoru hesaplar
+- Her eksik beceri için somut, portföy odaklı öneriler üretir
+- Kişisel kariyer değerlendirmesi yazar (LLM ile)
 
----
-
-## �📌 Problem
-
-İş arayanlar, bir ilana ne kadar uyduklarını objektif olarak değerlendirmekte zorlanıyor. CV'deki beceriler ile ilandaki gereksinimler arasındaki boşlukları görmek, hangi alanlara yatırım yapılması gerektiğini anlamak zaman alıcı ve subjektif bir süreç.
-
-## 💡 Çözüm
-
-Bu proje, **LangChain** ve **Ollama** kullanarak tamamen yerel çalışan bir yapay zeka asistanı sunar:
-
-- CV metninizi ve iş ilanı metnini giriyorsunuz
-- Sistem becerileri çıkarıyor, karşılaştırıyor ve analiz ediyor
-- Eşleşen beceriler, eksikler, öneriler ve uyum skoru alıyorsunuz
-
-**Hiçbir API anahtarı veya ücretli servis gerektirmez** — tamamen bilgisayarınızda çalışır.
+**İki analiz modu:**
+- **Chain** — Tek LLM çağrısı ile hızlı analiz
+- **Agent** — Deterministik tool pipeline + LLM değerlendirme (hibrit yaklaşım)
 
 ---
 
-## 🚀 Hızlı Başlangıç
+## Özellikler
+
+| Özellik | Açıklama |
+|---------|----------|
+| **Beceri Çıkarma** | 40+ teknik beceri tanıma, alias normalization (ör: `restful api` → `rest api`, `k8s` → `kubernetes`) |
+| **Fuzzy Matching** | Substring + kelime kesişimi ile kısmi eşleştirme |
+| **Öneri Motoru** | 40+ beceriye özel somut öneriler — mini proje, araç ve portföy tavsiyeleri |
+| **Uyum Skoru** | Programatik hesaplama (eşleşen / toplam × 100) |
+| **Takip Soruları** | Agent modunda konuşma geçmişi korunarak LLM ile sohbet (terminal) |
+| **Web Arayüzü** | Streamlit ile kullanıcı dostu arayüz |
+| **Docker Desteği** | Tek komutla çalıştırılabilir konteyner |
+
+---
+
+## Mimari
+
+### Chain Modu (Hızlı)
+
+```
+Kullanıcı → PromptTemplate → Ollama (Llama 3) → Markdown rapor
+```
+
+Tek LLM çağrısı. Hızlı ama her çalıştırmada sonuç farklı olabilir.
+
+### Agent Modu (Hibrit)
+
+```
+Kullanıcı → [beceri_cikar → karsilastir → skor_hesapla → oneri_uret] → LLM değerlendirme → Rapor
+                              ↑ Programatik tool çağrıları ↑              ↑ Yalnız yorum ↑
+```
+
+Tool'lar deterministik çalışır (aynı girdi → aynı çıktı). LLM yalnızca kişisel değerlendirme yazmak için kullanılır. Bu yaklaşım küçük modellerin tool calling tutarsızlığını ortadan kaldırır.
+
+### Chain vs Agent Karşılaştırma
+
+| Özellik | Chain | Agent |
+|---------|-------|-------|
+| Model | Llama 3 | Llama 3.1 |
+| Beceri Tanıma | LLM'e bırakılır | KNOWN_SKILLS DB + alias normalization |
+| Eşleştirme | LLM yorumu | Fuzzy matching (deterministik) |
+| Skor | LLM tahmini | Programatik hesaplama |
+| Öneriler | Genel LLM önerileri | Beceriye özel somut öneriler (40+) |
+| Takip Soruları | Yok | Konuşma geçmişi ile sohbet |
+| Tekrarlanabilirlik | Düşük | Yüksek |
+
+---
+
+## Hızlı Başlangıç
 
 ### Gereksinimler
 
-| Araç | Versiyon | Açıklama |
-|------|----------|----------|
-| Python | 3.11+ | Programlama dili |
-| uv | Son sürüm | Paket yöneticisi |
-| Ollama | Son sürüm | Yerel LLM çalıştırıcı |
+| Araç | Açıklama |
+|------|----------|
+| [Python 3.11+](https://python.org) | Programlama dili |
+| [uv](https://docs.astral.sh/uv/) | Paket yöneticisi |
+| [Ollama](https://ollama.com) | Yerel LLM çalıştırıcı |
 
 ### Kurulum
 
@@ -61,226 +94,207 @@ cd ai-career-copilot
 # 2. Bağımlılıkları yükleyin
 uv sync
 
-# 3. Ollama'dan modelleri indirin (henüz indirmediyseniz)
-ollama pull llama3       # Mod 1 (Chain) için
-ollama pull llama3.1     # Mod 2 (Agent) için — tool calling desteği
+# 3. Ollama modellerini indirin
+ollama pull llama3       # Chain modu için
+ollama pull llama3.1     # Agent modu için
 
 # 4. Sanal ortamı aktive edin
-# Windows PowerShell:
+# Windows:
 .venv\Scripts\Activate.ps1
 # Linux/Mac:
 source .venv/bin/activate
+```
 
-# 5. Çalıştırın
+### Terminal ile Çalıştırma
+
+```bash
 python main.py
 ```
 
-### Kullanım
+İki mod sunulur: Chain (hızlı) veya Agent (detaylı). Örnek CV ve iş ilanı dosyaları hazır gelir.
 
-Program başladığında iki mod sunulur:
+### Streamlit ile Çalıştırma
 
-1. **Basit Analiz (Chain)** — Sabit akışta tek seferde LLM analizi (Llama 3)
-2. **Akıllı Analiz (Agent)** — Tool'larla adım adım analiz + kişisel değerlendirme (Llama 3.1)
+```bash
+streamlit run streamlit_app.py
+```
+
+Tarayıcıda `http://localhost:8501` adresinde açılır:
 
 ```
-============================================================
-  🔍 AI Kariyer Asistanı — CV & İş İlanı Eşleştirme
-  LangChain + Ollama ile Beceri Analizi
-============================================================
-
-Hangi modu kullanmak istersiniz?
-  1 - Basit Analiz (Chain — Aşama 1)
-  2 - Akıllı Analiz (Agent — Aşama 2)
-Seçiminiz (1/2): 2
-
-CV metnini nasıl girmek istersiniz?
-  1 - Dosyadan oku (ornek_cv.txt)
-  2 - Elle yapıştır
-Seçiminiz (1/2): 1
-✓ CV dosyadan okundu.
+┌─────────────────────────────────────────────────────────┐
+│  🔍 AI Kariyer Asistanı                                │
+│                                                         │
+│  ┌─────────────────┐  ┌─────────────────┐              │
+│  │  📄 CV Metni    │  │  📋 İlan Metni  │              │
+│  │  [text area]    │  │  [text area]    │              │
+│  └─────────────────┘  └─────────────────┘              │
+│                                                         │
+│  ○ Agent Modu  ○ Chain Modu    [🔍 Analiz Et]          │
+│                                                         │
+│  ┌──────────────────────────────────────────┐          │
+│  │  📊 Eşleşen: 11/20  Skor: %55  Eksik: 9 │          │
+│  │  [Eşleşen] [Eksik] [Öneriler] [Değerl.]  │          │
+│  └──────────────────────────────────────────┘          │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📁 Proje Yapısı
+## Docker ile Çalıştırma
+
+> **Not:** Ollama host makinede çalışmalıdır. Container yalnızca Streamlit uygulamasını çalıştırır ve Ollama'ya `host.docker.internal` üzerinden bağlanır.
+
+```bash
+# 1. Ollama'nın host makinede çalıştığından emin olun
+ollama serve
+
+# 2. Container'ı başlatın
+docker compose up --build
+
+# 3. Tarayıcıda açın
+# http://localhost:8501
+```
+
+Ollama farklı bir adreste çalışıyorsa:
+
+```bash
+OLLAMA_HOST=http://192.168.1.100:11434 docker compose up --build
+```
+
+---
+
+## Örnek Çıktı (Agent Modu)
+
+`ornek_cv.txt` ve `ornek_ilan.txt` ile üretilen gerçek çıktı:
+
+```
+🤖 Agent modu aktif — Tool çağrıları:
+
+  🔧 beceri_cikar(cv) çağrılıyor...
+    → [CV] Bulunan beceriler (17): css, django, docker, flask, git, html,
+      javascript, linux, postgresql, python, react, rest api, sql, sqlite ...
+
+  🔧 beceri_cikar(ilan) çağrılıyor...
+    → [ILAN] Bulunan beceriler (17): celery, ci/cd, django, docker, fastapi,
+      git, github actions, jenkins, kubernetes, microservices, mysql,
+      postgresql, pytest, python, rabbitmq, redis, rest api ...
+
+  🔧 karsilastir çağrılıyor...
+    → Eşleşen (9): django, docker, git, postgresql, python, rest api, sql ...
+      Eksik (8): celery, ci/cd, fastapi, jenkins, kubernetes, pytest, redis ...
+
+  🔧 skor_hesapla çağrılıyor...
+    → Uyum Skoru: %53 — Orta uyum
+
+  🔧 oneri_uret çağrılıyor...
+    → Somut Öneriler:
+      - fastapi: FastAPI ile küçük REST API projesi oluşturun. GitHub'a yükleyin.
+      - ci/cd: GitHub Actions ile test + lint pipeline'ı ekleyin.
+      - kubernetes: Minikube ile K8s cluster kurun. Pod deploy edin.
+      - pytest: En önemli 3 fonksiyon için unit test yazın. CI'a entegre edin.
+      - redis: Django projenize redis cache ekleyin.
+      ...
+
+  🤖 Kişisel değerlendirme yazılıyor...
+
+📊 Uyum Skoru: %53 — Orta uyum. Eksik becerilere odaklanmanız gerekiyor.
+```
+
+---
+
+## Proje Yapısı
 
 ```
 ai-career-copilot/
-├── main.py                 # Ana uygulama — mod seçimi, girdi alma, çıktı gösterimi
-├── agent.py                # Aşama 2 — Agent yapısı (create_agent + LangGraph)
-├── tools.py                # Agent tool'ları (beceri_cikar, karsilastir, skor, öneri)
-├── ornek_cv.txt            # Test için örnek CV metni
-├── ornek_ilan.txt          # Test için örnek iş ilanı metni
-├── pyproject.toml          # Proje yapılandırması ve bağımlılıklar
-├── README.md               # Bu dosya
-│
-├── docs/                   # Dokümantasyon
-│   ├── product_perspective.md    # Product Manager perspektifi
-│   ├── business_analysis.md      # İş Analisti perspektifi
-│   └── technical_architecture.md # AI Engineer perspektifi
-│
-└── .gitignore
+├── core/                      # Analiz motoru
+│   ├── __init__.py
+│   ├── skills.py              # Beceri DB, normalization, extraction
+│   ├── tools.py               # LangChain tool'ları (@tool)
+│   ├── chain.py               # Chain modu (PromptTemplate + LCEL)
+│   └── agent.py               # Agent modu (hibrit pipeline)
+├── streamlit_app.py           # Web arayüzü
+├── main.py                    # Terminal CLI
+├── ornek_cv.txt               # Örnek CV
+├── ornek_ilan.txt             # Örnek iş ilanı
+├── Dockerfile                 # Container tanımı
+├── docker-compose.yml         # Orkestrasyon
+├── .streamlit/config.toml     # Streamlit ayarları
+├── pyproject.toml             # Proje yapılandırması
+├── docs/                      # Dokümantasyon
+│   ├── product_perspective.md
+│   ├── business_analysis.md
+│   └── technical_architecture.md
+└── README.md
 ```
 
 ---
 
-## ⚙️ Nasıl Çalışır?
+## Proje Durumu
 
-### Mod 1 — Chain (Basit Akış)
-```
-┌─────────────┐     ┌──────────────────┐     ┌───────────┐     ┌──────────────┐
-│  Kullanıcı  │────▶│  PromptTemplate  │────▶│  Ollama   │────▶│   Analiz     │
-│  CV + İlan  │     │  (LCEL Chain)    │     │  (Llama3) │     │   Sonucu     │
-└─────────────┘     └──────────────────┘     └───────────┘     └──────────────┘
-```
+| Alan | Durum | Detay |
+|------|-------|-------|
+| Beceri Çıkarma | ✅ Çalışıyor | 40+ beceri, alias normalization |
+| Fuzzy Matching | ✅ Çalışıyor | Substring + kelime kesişimi |
+| Öneri Motoru | ✅ Rule-based | 40+ beceriye özel somut öneriler |
+| Chain Modu | ✅ Çalışıyor | Llama 3, tek LLM çağrısı |
+| Agent Modu | ✅ Çalışıyor | Hibrit pipeline, deterministik tool'lar |
+| Takip Soruları | ✅ Terminal | Konuşma geçmişi korunarak sohbet |
+| Web Arayüzü | ✅ Streamlit | Agent + Chain modu, metrikler, sekmeler |
+| Docker | ✅ Hazır | Tek komutla çalıştırılabilir |
+| PDF Desteği | 📋 Planlanıyor | PDF'den CV okuma |
 
-### Mod 2 — Agent (Hibrit Akıllı Analiz)
-```
-┌─────────────┐     ┌──────────────────────────────────────────────────────┐
-│  Kullanıcı  │     │  Hibrit Pipeline                                     │
-│  CV + İlan  │────▶│                                                      │
-│             │     │  1. beceri_cikar(cv)   ─┐                            │
-│             │     │  2. beceri_cikar(ilan)  ├─▶ Programatik tool çağrısı │
-│             │     │  3. karsilastir         │                            │
-│             │     │  4. skor_hesapla       ─┘                            │
-│             │     │  5. oneri_uret (beceriye özel somut öneriler)         │
-│             │     │  6. LLM → Kişisel değerlendirme (llama3.1)           │
-│             │◀────│                                                      │
-│  Takip      │────▶│  7. Takip soruları → LLM (konuşma geçmişi ile)       │
-└─────────────┘     └──────────────────────────────────────────────────────┘
-```
-
-1. **Girdi**: Kullanıcı CV metnini ve iş ilanı metnini girer
-2. **Mod seçimi**: Chain (sabit akış) veya Agent (hibrit akıllı analiz)
-3. **Analiz**: Chain → tek seferde LLM / Agent → programatik tool'lar + LLM değerlendirme
-4. **Çıktı**: Eşleşen/eksik beceriler, uyum skoru ve kişisel değerlendirme
-5. **Takip** (Agent): Konuşma geçmişi korunarak ek soru sorulabilir
-
-### Gerçek Örnek Çıktı (Agent Modu)
-
-Aşağıdaki çıktı `ornek_cv.txt` ve `ornek_ilan.txt` dosyaları ile Agent modunda üretilmiştir:
-
-```
-🤖 Agent modu aktif — Tool çağrılarını aşağıda göreceksiniz:
-
-  [Tool] beceri_cikar(cv) çağrılıyor...
-  → [CV] Bulunan beceriler (19): python, javascript, java, go, html, css,
-    html/css, sql, django, flask, react, postgresql, sqlite, docker, git,
-    github, vs code, rest api, linux
-
-  [Tool] beceri_cikar(ilan) çağrılıyor...
-  → [ILAN] Bulunan beceriler (20): python, go, sql, django, fastapi,
-    postgresql, mysql, redis, docker, kubernetes, jenkins, github actions,
-    ci/cd, git, github, restful api, mikroservis, celery, rabbitmq, pytest
-
-  [Tool] karsilastir çağrılıyor...
-  → Eslesen beceriler (11): django, docker, git, github, github actions,
-    go, mysql, postgresql, python, restful api, sql
-    Eksik beceriler (9): celery, ci/cd, fastapi, jenkins, kubernetes,
-    mikroservis, pytest, rabbitmq, redis
-
-  [Tool] skor_hesapla çağrılıyor...
-  → Uyum Skoru: %55 — Orta uyum. Eksik becerilere odaklanmaniz gerekiyor.
-
-  [Tool] oneri_uret çağrılıyor...
-  → Somut Oneriler:
-    - celery: Django projenize Celery + Redis entegrasyonu yapin.
-    - ci/cd: GitHub Actions ile otomatik test + lint pipeline'i ekleyin.
-    - fastapi: Basit bir REST API projesi olusturun.
-    - kubernetes: Minikube ile yerel bir K8s cluster kurun.
-    - pytest: Mevcut projenizdeki en onemli 3 fonksiyon icin unit test yazin.
-    - redis: Mevcut Django/Flask projenize cache ekleyin.
-    ...
-
-  [LLM] Kişisel değerlendirme yazılıyor...
-
-📊 Uyum Skoru: %55 — Orta uyum
-```
-
-### Chain vs Agent — Ne Fark Eder?
-
-| Özellik | Chain (Mod 1) | Agent (Mod 2) |
-|---------|--------------|---------------|
-| **Model** | Llama 3 | Llama 3.1 |
-| **Beceri Tanıma** | LLM'e bırakılır (hallucination riski) | KNOWN_SKILLS DB ile deterministik |
-| **Eşleştirme** | LLM'in kendi yorumu | Fuzzy matching (substring + kelime kesişimi) |
-| **Skor** | LLM tahmini | Programatik hesaplama (eşleşen/toplam × 100) |
-| **Öneriler** | Genel LLM önerileri | Beceriye özel somut öneriler (ONERI_HARITASI) |
-| **Takip Soruları** | ❌ Yok | ✅ Konuşma geçmişi ile sohbet |
-| **Tekrarlanabilirlik** | Düşük (LLM'e bağlı) | Yüksek (deterministik tool'lar) |
-| **Hız** | Hızlı (tek LLM çağrısı) | Daha yavaş (5 tool + 1 LLM çağrısı) |
-
-> **Neden Agent?** Chain modu tek seferde LLM'e her şeyi bırakır — sonuç her çalıştırmada farklı olabilir. Agent modu ise becerileri programatik olarak çıkarır, skorlamayı hesaplar, ve her beceri için somut öneri üretir. LLM sadece kişisel değerlendirme yazmak için kullanılır.
+> **Not:** Beceri tanıma rule-based (keyword matching + alias normalization) çalışmaktadır. NLP/ML tabanlı extraction ileride planlanmaktadır.
 
 ---
 
-## 🗺️ Proje Yol Haritası
+## Yol Haritası
 
-| Aşama | Durum | Açıklama |
-|-------|-------|----------|
-| **1 — Temel MVP** | ✅ Tamamlandı | CV-ilan karşılaştırma, beceri eşleştirme, öneriler |
-| **2 — Agent Yapısı** | ✅ Tamamlandı | Tool kullanan agent, takip soruları, akıllı kariyer önerileri |
-| **3 — Ürünleştirme** | 📋 Planlandı | Streamlit arayüz, PDF yükleme, demo yapılabilir hale getirme |
-
-### Aşama 1 — Temel MVP ✅
-- [x] LangChain + Ollama entegrasyonu
-- [x] PromptTemplate ile yapılandırılmış analiz
-- [x] LCEL chain (pipe operatörü)
-- [x] Dosyadan veya elle metin girişi
-- [x] Beceri eşleştirme ve eksik analizi
-- [x] Uyum skoru hesaplama
-
-### Aşama 2 — Agent ve Akıllı Analiz ✅
-- [x] Hibrit agent: programatik tool çağrıları + LLM değerlendirme
-- [x] 4 tool: beceri_cikar (bilinen beceri DB'si), karsilastir (fuzzy matching), skor_hesapla, oneri_uret
-- [x] 40+ teknik beceri tanıma (KNOWN_SKILLS veritabanı)
-- [x] Takip soruları — konuşma geçmişi korunarak (LLM chat modu)
-- [x] Kısmi beceri eşleştirme (substring + kelime bazlı fuzzy matching)
-- [x] Tool sonuçları ekranda adım adım gösterim
-
-### Aşama 3 — Ürünleştirme 📋
-- [ ] Streamlit web arayüzü
-- [ ] PDF olarak CV yükleme desteği
+- [x] PromptTemplate + LCEL chain ile temel analiz
+- [x] Hibrit agent: programatik tool'lar + LLM değerlendirme
+- [x] 40+ beceri tanıma + alias normalization
+- [x] Beceriye özel somut öneriler (ONERI_HARITASI)
+- [x] Fuzzy matching (substring + kelime kesişimi)
+- [x] Takip soruları (konuşma geçmişi korunarak)
+- [x] Streamlit web arayüzü
+- [x] Docker desteği
+- [ ] PDF'den CV yükleme
 - [ ] Çoklu ilan karşılaştırma
-- [ ] Proje demo videosu
-- [ ] Tam dokümantasyon paketi
+- [ ] NLP tabanlı beceri çıkarma
 
 ---
 
-## 📖 Dokümantasyon
+## Teknoloji Stack
 
-Bu projenin farklı perspektiflerden incelenmesi için üç ayrı doküman hazırlanmıştır:
-
-| Doküman | Perspektif | İçerik |
-|---------|-----------|--------|
-| [Product Perspective](docs/product_perspective.md) | Product Manager | Problem tanımı, kullanıcı segmentleri, değer önerisi, metrikler |
-| [Business Analysis](docs/business_analysis.md) | İş Analisti | Gereksinimler, use case'ler, süreç akışları, kabul kriterleri |
-| [Technical Architecture](docs/technical_architecture.md) | AI Engineer | Mimari, model seçimi, prompt engineering, teknik kararlar |
-
----
-
-## 🛠️ Teknoloji Stack
-
-| Teknoloji | Kullanım Amacı |
-|-----------|---------------|
-| **Python 3.11** | Ana programlama dili |
-| **LangChain** | LLM orchestration framework |
-| **LangChain LCEL** | Chain yapısı (PromptTemplate \| LLM) |
-| **LangGraph** | Agent yapısı (create_agent, ReAct döngüsü) |
-| **Ollama** | Yerel LLM çalıştırma altyapısı |
-| **Llama 3 / 3.1** | Dil modelleri (3: chain, 3.1: agent tool calling) |
-| **uv** | Paket ve proje yönetimi |
+| Teknoloji | Kullanım |
+|-----------|----------|
+| Python 3.11 | Ana dil |
+| LangChain | LLM orchestration (LCEL chain + @tool) |
+| Ollama | Yerel LLM (Llama 3 / 3.1) |
+| Streamlit | Web arayüzü |
+| Docker | Konteynerizasyon |
+| uv | Paket yönetimi |
 
 ---
 
-## 👩‍💻 Geliştirici
+## Dokümantasyon
+
+| Doküman | Perspektif |
+|---------|-----------|
+| [Product Perspective](docs/product_perspective.md) | Product Manager — problem, kullanıcı segmentleri, metrikler |
+| [Business Analysis](docs/business_analysis.md) | İş Analisti — gereksinimler, use case, kabul kriterleri |
+| [Technical Architecture](docs/technical_architecture.md) | AI Engineer — mimari, model seçimi, teknik kararlar |
+
+---
+
+## Geliştirici
 
 **Rumeysa Sakın**
-- Endüstri Mühendisi | Endüstri Mühendisliği Yüksek Lisans Öğrencisi
-- Kariyer Odağı: İş Analisti · Product Manager · AI Engineer
+Endüstri Mühendisi · Endüstri Mühendisliği Yüksek Lisans Öğrencisi
+Kariyer Odağı: İş Analisti · Product Manager · AI Engineer
 
 ---
 
-## 📝 Lisans
+## Lisans
 
 Bu proje eğitim ve portföy amaçlı geliştirilmiştir.
