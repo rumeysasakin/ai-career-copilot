@@ -11,7 +11,7 @@
 | **Proje Adı** | AI Kariyer Asistanı — CV & İş İlanı Eşleştirme Sistemi |
 | **Amaç** | Kullanıcının CV'si ile iş ilanı arasındaki beceri uyumunu analiz etmek |
 | **Paydaşlar** | İş arayanlar, kariyer danışmanları, İK profesyonelleri |
-| **Mevcut Aşama** | Aşama 1 — Temel MVP |
+| **Mevcut Aşama** | Aşama 2 — Agent (Hibrit Akıllı Analiz) |
 
 ---
 
@@ -64,9 +64,9 @@
 | Alan | Değer |
 |------|-------|
 | **Girdi** | CV metni + İlan metni |
-| **İşlem** | LangChain LCEL chain üzerinden Ollama'ya gönderim |
-| **Çıktı** | Yapılandırılmış analiz sonucu |
-| **Model** | Llama 3 (Ollama) |
+| **İşlem** | Hibrit pipeline: programatik tool çağrıları + LLM değerlendirme |
+| **Çıktı** | Yapılandırılmış analiz sonucu + kişisel değerlendirme |
+| **Model** | Llama 3 (chain) / Llama 3.1 (agent) via Ollama |
 | **Parametre** | temperature=0.3 |
 
 ### FR-04: Sonuç Gösterimi
@@ -197,7 +197,9 @@
 
 ---
 
-## 10. Kabul Test Senaryoları (Aşama 1)
+## 10. Kabul Test Senaryoları
+
+### Aşama 1 Testleri
 
 | Test ID | Senaryo | Beklenen Sonuç | Durum |
 |---------|---------|----------------|-------|
@@ -206,3 +208,13 @@
 | **AT-03** | Türkçe CV + Türkçe ilan | Türkçe analiz sonucu | ✅ Geçti |
 | **AT-04** | Farklı sektörden CV-ilan çifti | Düşük uyum skoru, çok sayıda eksik | ✅ Geçti |
 | **AT-05** | Çok benzer CV-ilan çifti | Yüksek uyum skoru, az eksik | ✅ Geçti |
+
+### Aşama 2 Testleri
+
+| Test ID | Senaryo | Beklenen Sonuç | Durum |
+|---------|---------|----------------|-------|
+| **AT-06** | Agent moduyla (mod 2) örnek dosyalarla analiz | Tool çağrıları + yapısal rapor + kişisel değerlendirme | ✅ Geçti |
+| **AT-07** | Takip sorusu sorma (agent mod) | Bağlama uygun, tutarlı cevap | ✅ Geçti |
+| **AT-08** | Beceri eşleştirme doğruluğu (fuzzy) | REST API ↔ RESTful API eşleşmeli | ✅ Geçti |
+| **AT-09** | Tool sonuçları ekranda görünürlük | Her tool çağrısı adım adım yazdırılmalı | ✅ Geçti |
+| **AT-10** | Mod 1 (chain) geriye uyumluluk | Eski chain modu hala çalışmalı | ✅ Geçti |

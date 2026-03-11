@@ -74,7 +74,7 @@
 - ❌ PDF yükleme (metin formatında girdi)
 - ❌ Çoklu ilan karşılaştırma
 - ❌ Kullanıcı hesabı / veri saklama
-- ❌ İnteraktif diyalog (tek seferlik analiz)
+- ✅ İnteraktif diyalog (Aşama 2'de eklendi — takip soruları)
 
 > **MVP Felsefesi:** En az özellikle en çok değeri doğrula. Kullanıcının gerçekten "beceri eşleştirme" isteyip istemediğini test et.
 
@@ -129,10 +129,12 @@ Başlat
 ### Q1 — Temel MVP ✅
 Çalışan bir temel sistem. LangChain + Ollama mantığını doğrula.
 
-### Q2 — Agent ve Akıllı Analiz
-- Agent yapısı ile interaktif diyalog
-- Daha akıllı kariyer önerileri
-- "Hangi projeni öne çıkar" gibi bağlamsal tavsiyeler
+### Q2 — Agent ve Akıllı Analiz ✅
+- Hibrit agent: programatik tool'lar + LLM değerlendirme
+- 40+ teknik beceri tanıma veritabanı (KNOWN_SKILLS)
+- Fuzzy matching ile beceri eşleştirme
+- Takip soruları (konuşma geçmişi korunarak)
+- Kişisel değerlendirme ve kariyer önerileri
 
 ### Q3 — Ürünleştirme
 - Streamlit web arayüzü
@@ -151,7 +153,7 @@ Başlat
 | Somut öneriler | ✅ | Kısmen | ✅ |
 | Türkçe destek | ✅ | ❌ | ❌ |
 | Açık kaynak | ✅ | ❌ | ❌ |
-| Agent / Diyalog | Aşama 2'de | ❌ | ❌ |
+| Agent / Diyalog | ✅ Tamamlandı | ❌ | ❌ |
 
 ### Farklılaştırıcılar
 1. **Tamamen yerel** — veri gizliliği garantisi

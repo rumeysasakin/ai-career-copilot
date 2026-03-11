@@ -30,7 +30,7 @@
 | **Input Layer** | Python I/O | Kullanıcıdan metin alma (dosya/stdin) |
 | **Orchestration** | LangChain LCEL | Prompt oluşturma + LLM çağrısı zinciri |
 | **LLM Runtime** | Ollama | Yerel model sunucusu (HTTP API: localhost:11434) |
-| **Model** | Llama 3 8B | Meta'nın açık kaynak dil modeli |
+| **Model** | Llama 3 / 3.1 8B | Meta'nın açık kaynak dil modelleri (3: chain, 3.1: agent) |
 | **Output** | Terminal (stdout) | Yapılandırılmış metin çıktısı |
 
 ---
@@ -122,7 +122,7 @@ CV METNİ:
 | Parametre | Değer | Gerekçe |
 |-----------|-------|---------|
 | **temperature** | 0.3 | Analiz görevi → düşük yaratıcılık, yüksek tutarlılık |
-| **model** | llama3 | 8B parametre, Türkçe desteği yeterli, hızlı |
+| **model** | llama3 / llama3.1 | 8B parametre, llama3: chain, llama3.1: agent (tool calling) |
 
 > **Not:** `temperature=0` tam deterministik yapar ama bazen tekrarlı çıktılar üretir. 0.3 dengeli bir değerdir.
 
@@ -148,21 +148,35 @@ PromptTemplate ──pipe──▶ ChatOllama
   prompt string        (content: analiz metni)
 ```
 
-### Planlanan Chain (Aşama 2)
+### Planlanan Chain (Aşama 2) → ✅ Tamamlandı
 
 ```python
-analiz_chain = analiz_prompt | llm | StrOutputParser()
-# veya
-analiz_chain = analiz_prompt | llm | JsonOutputParser()
+# Hibrit yaklaşım benimsenmiştir:
+# Tool'lar programatik olarak çağrılır, LLM sadece rapor/değerlendirme yazar.
+analiz_chain = analiz_prompt | llm  # Chain modu (Llama 3)
+# Agent modu: tool sonuçları + llm.invoke(yorum_prompt)  (Llama 3.1)
 ```
 
-### Planlanan Agent (Aşama 2)
+### Agent Yapısı (Aşama 2) → ✅ Tamamlandı
 
 ```python
-tools = [beceri_cikar_tool, oneri_tool, skor_tool]
-agent = create_tool_calling_agent(llm, tools, prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools)
+# Hibrit agent: tool'lar programatik çağrılır, LLM sadece değerlendirme yazar
+from tools import beceri_cikar, karsilastir, skor_hesapla, oneri_uret
+
+# 1. Tool'lar sırayla çağrılır (güvenilir, deterministik)
+cv_beceriler = beceri_cikar.invoke({"metin": cv, "kaynak": "cv"})
+ilan_beceriler = beceri_cikar.invoke({"metin": ilan, "kaynak": "ilan"})
+karsilastirma = karsilastir.invoke({"cv_skills": ..., "job_skills": ...})
+skor = skor_hesapla.invoke({"eslesen": n, "toplam": m})
+
+# 2. LLM sadece kişisel değerlendirme yazar
+yorum = llm.invoke(yorum_prompt)  # Llama 3.1
+
+# 3. Takip soruları için LLM chat modu (konuşma geçmişiyle)
+yanit = llm.invoke(gecmis_mesajlar)
 ```
+
+> **Neden hibrit?** `llama3.1 8B` tool calling API'sini tutarsız kullanıyor (bazen tool çağırmak yerine JSON yazıyor). Tool'ları programatik çağırmak %100 güvenilirlik sağlıyor.
 
 ---
 
@@ -213,11 +227,12 @@ Adım 4: Çıktı
 
 | Sınırlama | Açıklama | Çözüm Planı |
 |-----------|----------|-------------|
-| Çıktı tutarsızlığı | Aynı girdiyle farklı formatlar | Aşama 2: StructuredOutput |
-| Tek seferlik analiz | Takip sorusu sorulamıyor | Aşama 2: Agent + Memory |
+| Çıktı tutarsızlığı | Aynı girdiyle farklı formatlar | ✅ Hibrit yaklaşım ile çözüldü (tool'lar deterministik) |
+| Tek seferlik analiz | Takip sorusu sorulanamıyor | ✅ Aşama 2'de konuşma geçmişi ile çözüldü |
 | Sadece metin girişi | PDF desteklenmiyor | Aşama 3: PDF parser |
-| Hallüsinasyon riski | LLM uydurma beceri yazabilir | Düşük temperature + doğrulama |
+| Hallüsinasyon riski | LLM uydurma beceri yazabilir | ✅ KNOWN_SKILLS DB ile çözüldü (40+ bilinen beceri) |
 | Dil karışması | Türkçe soru → İngilizce cevap | Prompt'ta "Türkçe yanıt ver" zorlaması |
+| Tool calling tutarsızlığı | llama3.1 8B bazen tool çağırmak yerine JSON yazıyor | ✅ Hibrit yaklaşımla çözüldü (programatik tool çağrısı) |
 
 ---
 

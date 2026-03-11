@@ -45,8 +45,9 @@ cd ai-career-copilot
 # 2. Bağımlılıkları yükleyin
 uv sync
 
-# 3. Ollama'dan model indirin (henüz indirmediyseniz)
-ollama pull llama3
+# 3. Ollama'dan modelleri indirin (henüz indirmediyseniz)
+ollama pull llama3       # Mod 1 (Chain) için
+ollama pull llama3.1     # Mod 2 (Agent) için — tool calling desteği
 
 # 4. Sanal ortamı aktive edin
 # Windows PowerShell:
@@ -60,16 +61,21 @@ python main.py
 
 ### Kullanım
 
-Program başladığında iki seçenek sunulur:
+Program başladığında iki mod sunulur:
 
-1. **Dosyadan okuma** — Hazır örnek CV ve iş ilanı dosyalarıyla test edin
-2. **Elle yapıştırma** — Kendi CV'nizi ve hedeflediğiniz iş ilanını girin
+1. **Basit Analiz (Chain)** — Sabit akışta tek seferde LLM analizi (Llama 3)
+2. **Akıllı Analiz (Agent)** — Tool'larla adım adım analiz + kişisel değerlendirme (Llama 3.1)
 
 ```
 ============================================================
-  🔍 CV - İş İlanı Eşleştirme Sistemi
+  🔍 AI Kariyer Asistanı — CV & İş İlanı Eşleştirme
   LangChain + Ollama ile Beceri Analizi
 ============================================================
+
+Hangi modu kullanmak istersiniz?
+  1 - Basit Analiz (Chain — Aşama 1)
+  2 - Akıllı Analiz (Agent — Aşama 2)
+Seçiminiz (1/2): 2
 
 CV metnini nasıl girmek istersiniz?
   1 - Dosyadan oku (ornek_cv.txt)
@@ -112,20 +118,26 @@ ai-career-copilot/
 └─────────────┘     └──────────────────┘     └───────────┘     └──────────────┘
 ```
 
-### Mod 2 — Agent (Akıllı Analiz)
+### Mod 2 — Agent (Hibrit Akıllı Analiz)
 ```
-┌─────────────┐     ┌──────────────────┐     ┌───────────────────────────────┐
-│  Kullanıcı  │────▶│  Agent           │────▶│  Tool'lar                     │
-│  CV + İlan  │     │  (ReAct Döngüsü) │     │  beceri_cikar → karsilastir   │
-│             │◀────│  Düşün→Çağır→Gör │◀────│  skor_hesapla → oneri_uret    │
-└─────────────┘     └──────────────────┘     └───────────────────────────────┘
+┌─────────────┐     ┌──────────────────────────────────────────────────────┐
+│  Kullanıcı  │     │  Hibrit Pipeline                                     │
+│  CV + İlan  │────▶│                                                      │
+│             │     │  1. beceri_cikar(cv)   ─┐                            │
+│             │     │  2. beceri_cikar(ilan)  ├─▶ Programatik tool çağrısı │
+│             │     │  3. karsilastir         │                            │
+│             │     │  4. skor_hesapla       ─┘                            │
+│             │     │  5. LLM → Kişisel değerlendirme (llama3.1)           │
+│             │◀────│                                                      │
+│  Takip      │────▶│  6. Takip soruları → LLM (konuşma geçmişi ile)       │
+└─────────────┘     └──────────────────────────────────────────────────────┘
 ```
 
 1. **Girdi**: Kullanıcı CV metnini ve iş ilanı metnini girer
-2. **Mod seçimi**: Chain (sabit akış) veya Agent (tool calling)
-3. **Analiz**: Chain → tek seferde / Agent → adım adım tool çağrıları
-4. **Çıktı**: Eşleşen/eksik beceriler, öneriler ve uyum skoru
-5. **Takip** (Agent): Kullanıcı ek soru sorabilir
+2. **Mod seçimi**: Chain (sabit akış) veya Agent (hibrit akıllı analiz)
+3. **Analiz**: Chain → tek seferde LLM / Agent → programatik tool'lar + LLM değerlendirme
+4. **Çıktı**: Eşleşen/eksik beceriler, uyum skoru ve kişisel değerlendirme
+5. **Takip** (Agent): Konuşma geçmişi korunarak ek soru sorulabilir
 
 ### Örnek Çıktı
 
@@ -171,12 +183,12 @@ ai-career-copilot/
 - [x] Uyum skoru hesaplama
 
 ### Aşama 2 — Agent ve Akıllı Analiz ✅
-- [x] LangChain Agent yapısı (create_agent + LangGraph)
-- [x] 4 ayrı tool: beceri_cikar, karsilastir, skor_hesapla, oneri_uret
-- [x] Tool calling ile adım adım analiz (ReAct döngüsü)
-- [x] Takip soruları sorabilme (interaktif diyalog)
-- [x] Kısmi beceri eşleştirme (kelime bazlı fuzzy matching)
-- [ ] Structured output (JSON formatında çıktı) — gelecek iterasyonda
+- [x] Hibrit agent: programatik tool çağrıları + LLM değerlendirme
+- [x] 4 tool: beceri_cikar (bilinen beceri DB'si), karsilastir (fuzzy matching), skor_hesapla, oneri_uret
+- [x] 40+ teknik beceri tanıma (KNOWN_SKILLS veritabanı)
+- [x] Takip soruları — konuşma geçmişi korunarak (LLM chat modu)
+- [x] Kısmi beceri eşleştirme (substring + kelime bazlı fuzzy matching)
+- [x] Tool sonuçları ekranda adım adım gösterim
 
 ### Aşama 3 — Ürünleştirme 📋
 - [ ] Streamlit web arayüzü

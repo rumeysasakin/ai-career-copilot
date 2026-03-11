@@ -1,3 +1,4 @@
+import re
 from langchain_core.tools import tool
 
 
@@ -8,17 +9,69 @@ from langchain_core.tools import tool
 # "bu fonksiyonu agent çağırabilir" diyoruz.
 # Docstring önemli → Agent, tool'u NE ZAMAN çağıracağına docstring'e bakarak karar verir.
 
+# Bilinen teknik beceri anahtar kelimeleri (küçük harf)
+KNOWN_SKILLS = [
+    "python", "javascript", "typescript", "java", "c#", "c++", "go", "rust", "ruby",
+    "html", "css", "html/css", "sql", "nosql", "graphql",
+    "django", "flask", "fastapi", "react", "vue", "angular", "next.js", "node.js",
+    "spring", "express", ".net",
+    "postgresql", "mysql", "sqlite", "mongodb", "redis", "elasticsearch",
+    "docker", "kubernetes", "jenkins", "github actions", "ci/cd", "ci cd",
+    "git", "github", "gitlab", "vs code",
+    "rest api", "restful api", "grpc", "microservices", "mikroservis",
+    "celery", "rabbitmq", "kafka",
+    "pytest", "unittest", "jest", "selenium",
+    "linux", "aws", "azure", "gcp",
+    "machine learning", "deep learning", "nlp", "langchain",
+    "agile", "scrum", "jira",
+]
+
+
+def _extract_skills(metin: str) -> list[str]:
+    """Metinden bilinen teknik becerileri çıkarır."""
+    metin_lower = metin.lower()
+    bulunan = []
+
+    # Bilinen beceri listesinden eşleşenleri bul
+    for skill in KNOWN_SKILLS:
+        if skill in metin_lower:
+            bulunan.append(skill)
+
+    # Tekrarları kaldır, sıralı döndür
+    seen = set()
+    sonuc = []
+    for b in bulunan:
+        if b not in seen:
+            seen.add(b)
+            sonuc.append(b)
+    return sonuc
+
 
 @tool
 def beceri_cikar(metin: str, kaynak: str) -> str:
-    """Bir CV veya is ilani metninden teknik ve kisisel becerileri cikarir.
+    """Bir CV veya is ilani metninden teknik becerileri cikarir ve liste olarak dondurur.
     kaynak parametresi 'cv' veya 'ilan' olmali.
 
     Args:
         metin: Analiz edilecek metin icerigi
         kaynak: 'cv' veya 'ilan'
     """
-    return f"[{kaynak.upper()}] metninden beceriler cikarildi."
+    beceriler = _extract_skills(metin)
+    if not beceriler:
+        return f"[{kaynak.upper()}] metninde bilinen bir beceri bulunamadi."
+
+    beceri_listesi = ", ".join(beceriler)
+    return f"[{kaynak.upper()}] Bulunan beceriler ({len(beceriler)}): {beceri_listesi}"
+
+
+def _normalize_set(beceri_str: str) -> set:
+    """Virgülle ayrılmış beceri stringini normalize set'e çevirir."""
+    parcalar = re.split(r'[,\n\-•]', beceri_str)
+    return set(
+        b.strip().lower()
+        for b in parcalar
+        if b.strip() and len(b.strip()) > 1
+    )
 
 
 @tool
@@ -29,28 +82,15 @@ def karsilastir(cv_skills: str, job_skills: str) -> str:
         cv_skills: CV'den cikarilan becerilerin virgullu listesi
         job_skills: Is ilanindan cikarilan becerilerin virgullu listesi
     """
-    # Becerileri normalize et: küçük harf, boşlukları temizle
-    def normalize(beceri_str: str) -> set:
-        # Virgül, satır sonu veya tire ile ayır
-        import re
-        parcalar = re.split(r'[,\n\-•]', beceri_str)
-        return set(
-            b.strip().lower()
-            for b in parcalar
-            if b.strip() and len(b.strip()) > 1
-        )
+    cv_set = _normalize_set(cv_skills)
+    job_set = _normalize_set(job_skills)
 
-    cv_set = normalize(cv_skills)
-    job_set = normalize(job_skills)
-
-    # Kısmi eşleştirme: "python" hem "python programlama" hem "python" ile eşleşir
+    # Kısmi eşleştirme
     eslesen = set()
     for cv_b in cv_set:
         for job_b in job_set:
-            # Tam eşleşme veya kısmi eşleşme (en az 3 karakter)
             if cv_b in job_b or job_b in cv_b:
                 eslesen.add(job_b)
-            # Kelime bazlı eşleşme: ortak kelimeler varsa eşleştir
             elif len(cv_b) > 2 and len(job_b) > 2:
                 cv_words = set(cv_b.split())
                 job_words = set(job_b.split())
@@ -100,10 +140,20 @@ def oneri_uret(eksik_beceriler: str, mevcut_beceriler: str) -> str:
         eksik_beceriler: Virgullu eksik beceri listesi
         mevcut_beceriler: Virgullu mevcut beceri listesi
     """
+    eksik_list = [b.strip() for b in eksik_beceriler.split(",") if b.strip()]
+    mevcut_list = [b.strip() for b in mevcut_beceriler.split(",") if b.strip()]
+
+    oneriler = []
+    for beceri in eksik_list:
+        oneriler.append(f"- {beceri}: Online kurs veya dokumantasyon ile ogrenin.")
+
+    if not oneriler:
+        oneriler.append("- Tum beceriler mevcut, pratik projelerle pekistirin.")
+
     return (
-        f"Mevcut: {mevcut_beceriler}\n"
-        f"Eksik: {eksik_beceriler}\n"
-        "Bu bilgilere gore kisiye ozel oneriler uretildi."
+        f"Mevcut beceriler ({len(mevcut_list)}): {', '.join(mevcut_list)}\n"
+        f"Eksik beceriler ({len(eksik_list)}): {', '.join(eksik_list)}\n\n"
+        f"Oneriler:\n" + "\n".join(oneriler)
     )
 
 

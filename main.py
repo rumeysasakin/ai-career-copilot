@@ -146,6 +146,23 @@ def main():
 
     # --- Takip sorusu (sadece agent modunda) ---
     if mod == "2":
+        from agent import llm
+
+        # Konuşma geçmişini tut — LLM önceki analizi hatırlasın
+        gecmis = [
+            {"role": "system", "content": (
+                "Sen bir kariyer danismanisin. Kullanicinin CV'si ve is ilani analiz edildi. "
+                "Analiz sonuclarina dayanarak takip sorularina Turkce, samimi ve somut cevaplar ver. "
+                "Gereksiz tekrar yapma, dogrudan soruya odaklan."
+            )},
+            {"role": "user", "content": (
+                f"CV ve is ilani analizimin sonucu:\n\n{sonuc}"
+            )},
+            {"role": "assistant", "content": (
+                "Analiz sonuclarini inceledim. Takip sorularinizi bekliyorum."
+            )},
+        ]
+
         print("\n" + "-" * 60)
         print("💬 Agent modunda takip sorusu sorabilirsiniz.")
         print("   Çıkmak için 'q' yazın.\n")
@@ -154,17 +171,14 @@ def main():
             if soru.lower() in ("q", "quit", "çık", "cik", ""):
                 print("Görüşmek üzere! 👋")
                 break
-            # Takip sorusunu agent'a gönder (CV ve ilan bağlamıyla birlikte)
-            from agent import agent_executor
-            takip_mesaj = (
-                f"Daha önce analiz ettiğim CV ve ilan hakkında ek soru:\n"
-                f"CV: {cv_metni[:300]}...\nİlan: {ilan_metni[:300]}...\n\n"
-                f"Soru: {soru}"
-            )
-            takip_sonuc = agent_executor.invoke({
-                "messages": [{"role": "user", "content": takip_mesaj}]
-            })
-            print("\n" + takip_sonuc["messages"][-1].content + "\n")
+
+            gecmis.append({"role": "user", "content": soru})
+
+            yanit = llm.invoke(gecmis)
+
+            gecmis.append({"role": "assistant", "content": yanit.content})
+
+            print("\n" + yanit.content + "\n")
 
 
 if __name__ == "__main__":
