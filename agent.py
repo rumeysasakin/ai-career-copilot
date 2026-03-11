@@ -78,7 +78,12 @@ def agent_analiz_et(cv_metni: str, ilan_metni: str) -> str:
     eslesen_match = re.search(r"Eslesen beceriler \(\d+\): (.+)", karsilastirma)
     eslesen_str = eslesen_match.group(1) if eslesen_match else "Yok"
 
-    # Adım 6: Raporu programatik olarak oluştur + LLM'den sadece yorum al
+    # Adım 6: Öneri üret (role-specific)
+    print("  [Tool] oneri_uret çağrılıyor...")
+    oneriler = oneri_uret.invoke({"eksik_beceriler": eksik_str, "mevcut_beceriler": eslesen_str})
+    print(f"  → {oneriler[:200]}...\n")
+
+    # Adım 7: LLM'den kişisel değerlendirme al
     print("  [LLM] Kişisel değerlendirme yazılıyor...\n")
 
     yorum_prompt = f"""Sen kariyer danismanisin. Asagidaki analiz sonuclarina bakarak
@@ -107,7 +112,10 @@ Skor: {skor}"""
 
 ## 📊 {skor}
 
-## 💡 Değerlendirme ve Öneriler
+## 🛠️ Somut Öneriler (Beceriye Özel)
+{oneriler}
+
+## 💡 Kişisel Değerlendirme
 {yorum.content}"""
 
     return rapor

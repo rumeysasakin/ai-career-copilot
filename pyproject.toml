@@ -1,12 +1,11 @@
 [project]
-name = "my-langchain"
-version = "0.1.0"
-description = "Add your description here"
+name = "ai-career-copilot"
+version = "0.2.0"
+description = "CV ile iş ilanı arasındaki beceri uyumunu analiz eden yapay zeka asistanı. LangChain + Ollama ile tamamen yerel çalışır."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "langchain>=1.2.10",
     "langchain-community>=0.4.1",
     "langchain-ollama>=1.0.1",
-    "langchain-openai>=1.1.11",
 ]

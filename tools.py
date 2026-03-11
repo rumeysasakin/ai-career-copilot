@@ -134,26 +134,97 @@ def skor_hesapla(eslesen: int, toplam: int) -> str:
 
 @tool
 def oneri_uret(eksik_beceriler: str, mevcut_beceriler: str) -> str:
-    """Eksik becerilere gore somut kariyer onerileri uretir.
+    """Eksik becerilere gore somut ve kisisellestirilmis kariyer onerileri uretir.
 
     Args:
         eksik_beceriler: Virgullu eksik beceri listesi
         mevcut_beceriler: Virgullu mevcut beceri listesi
     """
-    eksik_list = [b.strip() for b in eksik_beceriler.split(",") if b.strip()]
-    mevcut_list = [b.strip() for b in mevcut_beceriler.split(",") if b.strip()]
+    eksik_list = [b.strip().lower() for b in eksik_beceriler.split(",") if b.strip()]
+    mevcut_list = [b.strip().lower() for b in mevcut_beceriler.split(",") if b.strip()]
+
+    # Beceriye özel somut öneri haritası
+    ONERI_HARITASI = {
+        "docker": "Mevcut projelerinizden birini Dockerfile ile konteynerize edin. "
+                  "docker-compose ile multi-service bir ortam kurun (ornegin Django + PostgreSQL + Redis).",
+        "kubernetes": "Minikube ile yerel bir K8s cluster kurun. "
+                      "Docker'la olusturdugunuz imaji K8s pod'una deploy edin. kubectl komutlarini ogrenin.",
+        "fastapi": "Basit bir REST API projesi olusturun (ornegin todo-app). "
+                   "FastAPI'nin otomatik Swagger dokumanini kesfet. async endpoint yazmayı deneyin.",
+        "ci/cd": "GitHub Actions ile mevcut bir projenize otomatik test + lint pipeline'i ekleyin. "
+                 "push'ta pytest calistiran bir .github/workflows/test.yml olusturun.",
+        "ci cd": "GitHub Actions ile mevcut bir projenize otomatik test pipeline'i ekleyin.",
+        "jenkins": "Jenkins'i Docker ile yerel kurun. Basit bir freestyle job olusturup "
+                   "GitHub reponuzu build ettirin. Pipeline as Code (Jenkinsfile) yazmayı deneyin.",
+        "redis": "Mevcut Django/Flask projenize cache ekleyin (django-redis veya flask-caching). "
+                 "Redis CLI ile temel komutlari deneyin: SET, GET, EXPIRE, LPUSH.",
+        "celery": "Django projenize Celery + Redis entegrasyonu yapin. "
+                  "Uzun suren bir islemi (ornegin email gonderimi) asenkron task'a cevirin.",
+        "rabbitmq": "RabbitMQ'yu Docker ile kurun. Basit bir producer-consumer ornegi yazin. "
+                    "Celery ile RabbitMQ broker olarak entegre edin.",
+        "pytest": "Mevcut projenizdeki en onemli 3 fonksiyon icin unit test yazin. "
+                  "pytest-cov ile coverage raporunu olusturun. %80 coverage hedefleyin.",
+        "mikroservis": "Monolitik bir projenizi iki ayri servise bölun (ornegin auth + api). "
+                       "Servisler arasi iletisimi REST veya message queue ile kurun.",
+        "microservices": "Mevcut projenizi iki bagimsiz servise ayirin. Docker Compose ile orkestre edin.",
+        "postgresql": "PostgreSQL'de index, JOIN ve EXPLAIN ANALYZE komutlarini deneyin. "
+                      "Django ORM sorgularinin SQL karsiliklarini inceleyin.",
+        "mysql": "MySQL Workbench ile sorgulama pratiği yapin. "
+                 "PostgreSQL biliyorsaniz farklilikları (syntax, JSON desteği) ogrenin.",
+        "aws": "AWS Free Tier ile EC2 instance baslatip bir Flask/Django uygulamasi deploy edin. "
+               "S3, RDS ve Lambda'yi kesfet.",
+        "azure": "Azure App Service ile bir Python web uygulamasi deploy edin. Azure Portal'i kesfet.",
+        "gcp": "Google Cloud Run ile konteyner deploy edin. BigQuery ile veri analizi deneyin.",
+        "react": "Basit bir frontend projesi olusturun (portfolio sitesi). Props, state ve useEffect ogrenin.",
+        "vue": "Vue CLI ile proje olusturup component yapisi ve reactivity ogrenin.",
+        "angular": "Angular CLI ile proje olusturup component, service ve routing ogrenin.",
+        "machine learning": "scikit-learn ile basit bir siniflandirma projesi yapin (ornegin iris dataset). "
+                            "Kaggle'da beginner yarismalarına katılın.",
+        "deep learning": "PyTorch veya TensorFlow ile basit bir sinir agi egitimi yapin. "
+                         "MNIST el yazisi tanima projesinden baslayin.",
+        "nlp": "Hugging Face transformers kutuphanesiyle sentiment analizi yapin. "
+               "Kendi verinizle fine-tuning deneyin.",
+        "langchain": "Bu projeyi referans alin! LangChain dokumantasyonundaki quickstart'i tamamlayin. "
+                     "RAG (Retrieval Augmented Generation) ornegi yapin.",
+        "graphql": "Strawberry veya Graphene ile bir GraphQL API olusturup REST ile kiyaslayin.",
+        "kafka": "Docker ile Kafka cluster kurun. Python confluent-kafka ile producer-consumer yazin.",
+        "elasticsearch": "Docker ile Elasticsearch kurun. Python elasticsearch client ile index olusturup arama yapin.",
+        "selenium": "Selenium ile bir web sitesini otomatik test eden script yazin. Page Object Pattern ogrenin.",
+        "power bi": "Ornek bir veri seti ile dashboard olusturun. DAX formulleri ve iliski modelleme ogrenin.",
+        "tableau": "Tableau Public ile ucretsiz dashboard olusturup yayinlayin.",
+        "jira": "Kendi projeniz icin Jira'da board olusturun. Sprint planlama ve backlog yonetimi pratiği yapin.",
+        "agile": "Scrum Guide'i okuyun. Kendi projelerinizde 1 haftalik sprint dönguleri uygulayın.",
+        "scrum": "Scrum Guide'i okuyun. Daily standup, sprint review ve retrospective kavramlarini pratikte deneyin.",
+        "git": "Git branch stratejileri (Git Flow, trunk-based) ogrenin. "
+               "Interactive rebase ve cherry-pick komutlarini deneyin.",
+        "linux": "WSL veya bir VM ile Linux komut satirini gunluk isinizde kullanin. "
+                 "Bash scripting ile dosya islemlerini otomatize edin.",
+        "rest api": "OpenAPI/Swagger spec yazmayi ogrenin. Postman ile API testleri yapin.",
+        "restful api": "OpenAPI/Swagger spec yazmayi ogrenin. Postman ile API testleri yapin.",
+        "sql": "LeetCode veya HackerRank'te SQL sorulari cozun. Window functions ve CTE'leri ogrenin.",
+        "nosql": "MongoDB Atlas free tier ile dokuman tabanlı veritabani deneyin. CRUD islemleri yapin.",
+        "mongodb": "MongoDB Atlas free tier ile bir koleksiyon olusturun. Aggregation pipeline ogrenin.",
+    }
 
     oneriler = []
     for beceri in eksik_list:
-        oneriler.append(f"- {beceri}: Online kurs veya dokumantasyon ile ogrenin.")
+        beceri_lower = beceri.lower()
+        if beceri_lower in ONERI_HARITASI:
+            oneriler.append(f"- **{beceri}**: {ONERI_HARITASI[beceri_lower]}")
+        else:
+            # Bilinmeyen beceri için genel ama yine de somut öneri
+            oneriler.append(
+                f"- **{beceri}**: Resmi dokumantasyonu okuyun, YouTube'da crash course izleyin "
+                f"ve kucuk bir pratik proje yapin."
+            )
 
     if not oneriler:
-        oneriler.append("- Tum beceriler mevcut, pratik projelerle pekistirin.")
+        oneriler.append("- Tum beceriler mevcut! Pratik projelerle pekistirin ve portfoyunuze ekleyin.")
 
     return (
         f"Mevcut beceriler ({len(mevcut_list)}): {', '.join(mevcut_list)}\n"
         f"Eksik beceriler ({len(eksik_list)}): {', '.join(eksik_list)}\n\n"
-        f"Oneriler:\n" + "\n".join(oneriler)
+        f"Somut Oneriler:\n" + "\n".join(oneriler)
     )
 
 

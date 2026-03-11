@@ -9,7 +9,23 @@
 
 ---
 
-## 📌 Problem
+## � Mevcut Durum
+
+| Alan | Durum | Detay |
+|------|-------|-------|
+| **Beceri Çıkarma** | ✅ Çalışıyor | 40+ teknik beceri tanıma (KNOWN_SKILLS DB) |
+| **Fuzzy Matching** | ✅ Çalışıyor | Substring + kelime kesişimi ile kısmi eşleştirme |
+| **Öneri Motoru** | ✅ Rule-based | 40+ beceriye özel somut öneriler (ONERI_HARITASI) |
+| **Agent Modu** | ✅ Hibrit | Programatik tool çağrıları + LLM değerlendirme |
+| **Takip Soruları** | ✅ Çalışıyor | Konuşma geçmişi korunarak sohbet |
+| **Web Arayüzü** | 📋 Aşama 3 | Streamlit ile planlanıyor |
+| **PDF Desteği** | 📋 Aşama 3 | PDF'den CV okuma planlanıyor |
+
+> **Not:** Proje şu an terminal tabanlı bir prototiptir. Beceri tanıma rule-based (keyword matching) çalışmaktadır, NLP/ML tabanlı extraction Aşama 3'te planlanmaktadır.
+
+---
+
+## �📌 Problem
 
 İş arayanlar, bir ilana ne kadar uyduklarını objektif olarak değerlendirmekte zorlanıyor. CV'deki beceriler ile ilandaki gereksinimler arasındaki boşlukları görmek, hangi alanlara yatırım yapılması gerektiğini anlamak zaman alıcı ve subjektif bir süreç.
 
@@ -127,9 +143,10 @@ ai-career-copilot/
 │             │     │  2. beceri_cikar(ilan)  ├─▶ Programatik tool çağrısı │
 │             │     │  3. karsilastir         │                            │
 │             │     │  4. skor_hesapla       ─┘                            │
-│             │     │  5. LLM → Kişisel değerlendirme (llama3.1)           │
+│             │     │  5. oneri_uret (beceriye özel somut öneriler)         │
+│             │     │  6. LLM → Kişisel değerlendirme (llama3.1)           │
 │             │◀────│                                                      │
-│  Takip      │────▶│  6. Takip soruları → LLM (konuşma geçmişi ile)       │
+│  Takip      │────▶│  7. Takip soruları → LLM (konuşma geçmişi ile)       │
 └─────────────┘     └──────────────────────────────────────────────────────┘
 ```
 
@@ -139,30 +156,61 @@ ai-career-copilot/
 4. **Çıktı**: Eşleşen/eksik beceriler, uyum skoru ve kişisel değerlendirme
 5. **Takip** (Agent): Konuşma geçmişi korunarak ek soru sorulabilir
 
-### Örnek Çıktı
+### Gerçek Örnek Çıktı (Agent Modu)
+
+Aşağıdaki çıktı `ornek_cv.txt` ve `ornek_ilan.txt` dosyaları ile Agent modunda üretilmiştir:
 
 ```
-## ✅ Eşleşen Beceriler
-- Python programlama
-- Django framework
-- REST API geliştirme
-- PostgreSQL veritabanı
-- Git versiyon kontrol
+🤖 Agent modu aktif — Tool çağrılarını aşağıda göreceksiniz:
 
-## ❌ Eksik Beceriler
-- CI/CD süreçleri (GitHub Actions, Jenkins)
-- Redis / RabbitMQ
-- Kubernetes
-- Celery (asenkron görev yönetimi)
-- pytest (birim test)
+  [Tool] beceri_cikar(cv) çağrılıyor...
+  → [CV] Bulunan beceriler (19): python, javascript, java, go, html, css,
+    html/css, sql, django, flask, react, postgresql, sqlite, docker, git,
+    github, vs code, rest api, linux
 
-## 💡 Öneriler
-- GitHub Actions ile basit bir CI/CD pipeline kurarak portföyünüze ekleyin
-- Redis'i öğrenmek için mevcut Django projenize cache ekleyin
-- pytest ile mevcut projelerinize test yazarak başlayın
+  [Tool] beceri_cikar(ilan) çağrılıyor...
+  → [ILAN] Bulunan beceriler (20): python, go, sql, django, fastapi,
+    postgresql, mysql, redis, docker, kubernetes, jenkins, github actions,
+    ci/cd, git, github, restful api, mikroservis, celery, rabbitmq, pytest
 
-## 📊 Uyum Skoru: %60
+  [Tool] karsilastir çağrılıyor...
+  → Eslesen beceriler (11): django, docker, git, github, github actions,
+    go, mysql, postgresql, python, restful api, sql
+    Eksik beceriler (9): celery, ci/cd, fastapi, jenkins, kubernetes,
+    mikroservis, pytest, rabbitmq, redis
+
+  [Tool] skor_hesapla çağrılıyor...
+  → Uyum Skoru: %55 — Orta uyum. Eksik becerilere odaklanmaniz gerekiyor.
+
+  [Tool] oneri_uret çağrılıyor...
+  → Somut Oneriler:
+    - celery: Django projenize Celery + Redis entegrasyonu yapin.
+    - ci/cd: GitHub Actions ile otomatik test + lint pipeline'i ekleyin.
+    - fastapi: Basit bir REST API projesi olusturun.
+    - kubernetes: Minikube ile yerel bir K8s cluster kurun.
+    - pytest: Mevcut projenizdeki en onemli 3 fonksiyon icin unit test yazin.
+    - redis: Mevcut Django/Flask projenize cache ekleyin.
+    ...
+
+  [LLM] Kişisel değerlendirme yazılıyor...
+
+📊 Uyum Skoru: %55 — Orta uyum
 ```
+
+### Chain vs Agent — Ne Fark Eder?
+
+| Özellik | Chain (Mod 1) | Agent (Mod 2) |
+|---------|--------------|---------------|
+| **Model** | Llama 3 | Llama 3.1 |
+| **Beceri Tanıma** | LLM'e bırakılır (hallucination riski) | KNOWN_SKILLS DB ile deterministik |
+| **Eşleştirme** | LLM'in kendi yorumu | Fuzzy matching (substring + kelime kesişimi) |
+| **Skor** | LLM tahmini | Programatik hesaplama (eşleşen/toplam × 100) |
+| **Öneriler** | Genel LLM önerileri | Beceriye özel somut öneriler (ONERI_HARITASI) |
+| **Takip Soruları** | ❌ Yok | ✅ Konuşma geçmişi ile sohbet |
+| **Tekrarlanabilirlik** | Düşük (LLM'e bağlı) | Yüksek (deterministik tool'lar) |
+| **Hız** | Hızlı (tek LLM çağrısı) | Daha yavaş (5 tool + 1 LLM çağrısı) |
+
+> **Neden Agent?** Chain modu tek seferde LLM'e her şeyi bırakır — sonuç her çalıştırmada farklı olabilir. Agent modu ise becerileri programatik olarak çıkarır, skorlamayı hesaplar, ve her beceri için somut öneri üretir. LLM sadece kişisel değerlendirme yazmak için kullanılır.
 
 ---
 
